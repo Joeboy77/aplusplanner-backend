@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // Ensure this is correctly set in .env
+}
+
+model User {
+  id               String       @id @default(uuid())
+  firstName        String
+  lastName         String
+  email            String       @unique
+  password         String
+  role             Role
+  programSpecialty String?
+  certificateUrl   String?
+  university       String?      @default("University of Ghana")
+  department       String?
+  phoneNumber      String?
+  momoNumber       String?
+  isVerified       Boolean      @default(false)
+  isApproved       Boolean      @default(false)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  // ✅ Define relations properly
+  studentAssignments Assignment[] @relation("StudentAssignment")
+  tutorAssignments   Assignment[] @relation("TutorAssignment")
+}
+
+enum Role {
+  ADMIN
+  TUTOR
+  STUDENT
+}
+
+model Assignment {
+  id               String   @id @default(uuid())
+  studentId        String   @map("student_id")
+  title            String
+  description      String
+  programSpecialty String
+  fileUrl          String
+  status           String   @default("Pending") // Pending, Assigned, In Progress, Completed
+  submittedAt      DateTime @default(now())
+
+  assignedTutorId  String?  @map("assigned_tutor_id")
+  tutorCharge      Float?   
+  paidAt           DateTime?
+  isPaid           Boolean  @default(false)
+  completedFileUrl String?  // URL for the completed assignment
+  completedAt      DateTime? // Completion timestamp
+
+  // ✅ Define opposite relation names to match User model
+  Student User @relation(fields: [studentId], references: [id], name: "StudentAssignment")
+  Tutor   User? @relation(fields: [assignedTutorId], references: [id], name: "TutorAssignment")
+}
